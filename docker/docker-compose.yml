@@ -1,0 +1,35 @@
+services:
+  rover-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mars-rover-ros2-humble:latest
+    container_name: rover_dev
+    network_mode: host
+    privileged: false
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - ROS_DOMAIN_ID=42
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${HOME}/mars-rover-ws:/home/rover/mars-rover-ws:rw
+      - /dev:/dev
+    devices:
+      - /dev/dri:/dev/dri
+    device_cgroup_rules:
+      - 'c 188:* rmw'
+      - 'c 166:* rmw'
+    deploy:
+      resources:
+        limits:
+          cpus: "6.0"
+          memory: 12g
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'source /opt/ros/humble/setup.bash && ros2 topic list' >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    stdin_open: true
+    tty: true
